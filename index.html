@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Gap Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #080c14; --surface: #0e1420; --card: #111827; --border: #1c2a40;
+    --accent: #3b82f6; --accent-glow: rgba(59,130,246,0.12);
+    --green: #22c55e; --green-bg: rgba(34,197,94,0.07); --green-border: rgba(34,197,94,0.22);
+    --red: #ef4444; --red-bg: rgba(239,68,68,0.07); --red-border: rgba(239,68,68,0.22);
+    --amber: #f59e0b; --muted: #3d4f6a; --text: #e2e8f0; --text-dim: #8899b4;
+    --mono: 'JetBrains Mono', monospace; --sans: 'DM Sans', system-ui, sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; padding: 28px 16px 60px; line-height: 1.5; }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .header { margin-bottom: 28px; display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+  .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: pulse 2s infinite; display: inline-block; margin-right: 7px; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.3} }
+  .eyebrow { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 5px; }
+  h1 { font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -.5px; }
+  .subtitle { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .ctrl-box { display: flex; align-items: center; gap: 9px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 11px 16px; }
+  .ctrl-label { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+  .ctrl-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); width: 27px; height: 27px; border-radius: 6px; cursor: pointer; font-size: 17px; line-height: 1; transition: all .15s; }
+  .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .ctrl-val { font-size: 20px; font-weight: 700; min-width: 32px; text-align: center; font-family: var(--mono); }
+  .v-accent { color: var(--accent); } .v-amber { color: var(--amber); }
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  @media(max-width:600px){ .input-grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; transition: border-color .2s; }
+  .card:focus-within { border-color: rgba(59,130,246,.35); }
+  .card-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+  .card-hint { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+  textarea { width: 100%; min-height: 220px; background: rgba(0,0,0,.3); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: var(--mono); font-size: 11.5px; padding: 11px 13px; resize: vertical; outline: none; line-height: 1.75; transition: border-color .15s, box-shadow .15s; }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  textarea::placeholder { color: var(--muted); }
+  .fmt-hint { font-size: 10px; color: var(--muted); margin-top: 7px; }
+  code { color: var(--accent); background: rgba(59,130,246,.08); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); }
+  .run-wrap { display: flex; justify-content: center; margin-bottom: 28px; }
+  .btn-run { background: var(--accent); border: none; color: #fff; padding: 13px 50px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: var(--sans); transition: all .15s; box-shadow: 0 4px 20px rgba(59,130,246,.3); }
+  .btn-run:hover { background: #2563eb; transform: translateY(-2px); }
+  .btn-back { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 9px 16px; border-radius: 9px; cursor: pointer; font-size: 13px; font-family: var(--sans); transition: all .15s; }
+  .btn-back:hover { border-color: var(--text-dim); color: var(--text); }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; align-items: center; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+  .stat-val { font-size: 20px; font-weight: 700; font-family: var(--mono); }
+  .stat-label { font-size: 11px; color: var(--text-dim); }
+  .day-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  .day-tab { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; color: var(--text-dim); font-family: var(--sans); }
+  .day-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .day-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .badge { display: inline-block; background: rgba(255,255,255,.15); border-radius: 10px; padding: 1px 7px; font-size: 10px; margin-left: 5px; }
+  .badge-g { background: rgba(34,197,94,.3); color: #fff; }
+  .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media(max-width:680px){ .results-grid { grid-template-columns: 1fr; } }
+  .sec-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+  .t-green{color:var(--green)} .t-red{color:var(--red)} .t-blue{color:var(--accent)} .t-amber{color:var(--amber)}
+  .slot { border-radius: 10px; padding: 11px 14px; margin-bottom: 7px; }
+  .s-sched { background: var(--card); border: 1px solid var(--border); display: flex; align-items: center; gap: 9px; }
+  .s-bar { width: 3px; height: 30px; border-radius: 2px; background: var(--accent); flex-shrink: 0; }
+  .s-bar.g { background: var(--green); }
+  .s-name { font-size: 12px; font-weight: 600; color: #fff; }
+  .s-time { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .s-sub { font-size: 10px; color: var(--green); margin-top: 2px; }
+  .s-fit { background: var(--green-bg); border: 1px solid var(--green-border); display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: transform .15s; }
+  .s-fit:hover { transform: translateY(-1px); }
+  .s-fit-name { font-size: 12px; font-weight: 600; color: var(--green); }
+  .s-fit-time { font-family: var(--mono); font-size: 11px; color: rgba(34,197,94,.7); margin-top: 2px; }
+  .s-fit-note { font-size: 10px; color: rgba(34,197,94,.5); margin-top: 2px; }
+  .s-conflict { background: var(--red-bg); border: 1px solid var(--red-border); }
+  .s-conf-name { font-size: 12px; font-weight: 500; color: var(--red); }
+  .s-conf-time { font-family: var(--mono); font-size: 11px; color: rgba(239,68,68,.6); margin-top: 2px; }
+  .s-conf-why { font-size: 10px; color: rgba(239,68,68,.5); margin-top: 3px; line-height: 1.4; }
+  .btn-claim { background: transparent; border: 1px solid var(--green-border); color: var(--green); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; font-family: var(--sans); transition: all .15s; white-space: nowrap; flex-shrink: 0; }
+  .btn-claim:hover { background: var(--green); color: #000; }
+  .claimed-item { background: rgba(34,197,94,.06); border: 1px solid var(--green-border); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; }
+  .claimed-name { font-size: 12px; font-weight: 600; color: var(--green); }
+  .claimed-time { font-family: var(--mono); font-size: 10px; color: rgba(34,197,94,.6); margin-top: 2px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 14px; background: var(--card); border-radius: 10px; border: 1px solid var(--border); margin-bottom: 7px; }
+  .hidden { display: none !important; }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)} }
+  .fu { animation: fadeUp .25s ease forwards; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="eyebrow"><span class="pulse-dot"></span>Interview Scheduler</div>
+      <h1>Interview Gap Finder</h1>
+      <p class="subtitle">Paste your scheduled & available interviews — finds claimable slots recursively</p>
+    </div>
+    <div class="controls">
+      <div class="ctrl-box">
+        <span class="ctrl-label">Interview duration</span>
+        <button class="ctrl-btn" id="durMinus">−</button>
+        <span class="ctrl-val v-amber" id="durVal">60</span>
+        <span class="ctrl-label">min</span>
+        <button class="ctrl-btn" id="durPlus">+</button>
+      </div>
+      <div class="ctrl-box">
+        <span class="ctrl-label">Gap needed</span>
+        <button class="ctrl-btn" id="gapMinus">−</button>
+        <span class="ctrl-val v-accent" id="gapVal">15</span>
+        <span class="ctrl-label">min</span>
+        <button class="ctrl-btn" id="gapPlus">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="inputView">
+    <div class="input-grid">
+      <div class="card">
+        <div class="card-label">Your Scheduled Interviews</div>
+        <div class="card-hint">Copy-paste directly from your scheduled interviews page — raw text is fine</div>
+        <textarea id="scheduledInput" placeholder="1&#10;Ranu Kumar verma&#10;Java Developer&#10;SLK Software&#10;TODAY&#10;at 3:00 PM (IST)&#10;It's Time&#10;2&#10;Mohankumar N&#10;Fullstack Developer&#10;Straive&#10;TODAY&#10;at 4:00 PM (IST)"></textarea>
+        <div class="fmt-hint">Reads <code>at 3:00 PM (IST)</code> lines automatically</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Available / Unclaimed Candidates</div>
+        <div class="card-hint">Copy-paste directly from the available candidates page</div>
+        <textarea id="availableInput" placeholder="1&#10;Bairavi N&#10;Java -Microservices&#10;LTIMindtree.&#10;INR 500 | long Interview&#10;Mar 14&#10;03:00 - 3:30 PM (IST)&#10;&#10;2&#10;Manisha Sinha&#10;Java +GenAI&#10;Mphasis&#10;INR 500 | long Interview&#10;Mar 13&#10;03:30 - 4:15 PM (IST)"></textarea>
+        <div class="fmt-hint">Reads <code>03:00 - 3:30 PM (IST)</code> lines automatically</div>
+      </div>
+    </div>
+    <div class="run-wrap">
+      <button class="btn-run" id="runBtn">Find Fits →</button>
+    </div>
+  </div>
+
+  <div id="resultsView" class="hidden">
+    <div class="stats">
+      <div class="stat"><span class="stat-val" id="statSched" style="color:var(--accent)">0</span><span class="stat-label">Scheduled</span></div>
+      <div class="stat"><span class="stat-val" id="statFits" style="color:var(--green)">0</span><span class="stat-label">Can Claim</span></div>
+      <div class="stat"><span class="stat-val" id="statConf" style="color:var(--red)">0</span><span class="stat-label">Conflicts</span></div>
+      <div class="stat"><span class="stat-val" id="statClaimed" style="color:var(--amber)">0</span><span class="stat-label">Claimed</span></div>
+      <button class="btn-back" id="backBtn">← Edit</button>
+    </div>
+    <div class="day-tabs" id="dayTabs"></div>
+    <div class="results-grid">
+      <div>
+        <div class="sec-title t-blue" id="schedTitle">Your Schedule</div>
+        <div id="schedList"></div>
+        <div id="claimedSection" class="hidden">
+          <div class="divider"></div>
+          <div class="sec-title t-amber">🎯 Claimed (<span id="claimedCount">0</span>)</div>
+          <div id="claimedList"></div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-title t-green" id="fitsTitle">✅ Can Claim</div>
+        <div id="fitsList"></div>
+        <div class="divider"></div>
+        <div class="sec-title t-red" id="confTitle">❌ Conflicts</div>
+        <div id="confList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  let gapMin=15, durMin=60;
+  let scheduled=[], available=[], claimed=[];
+  let activeDay='ALL';
+
+  const MONTHS={JAN:0,FEB:1,MAR:2,APR:3,MAY:4,JUN:5,JUL:6,AUG:7,SEP:8,OCT:9,NOV:10,DEC:11};
+
+  function todayStr(){
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function parseDateLine(s){
+    s=s.trim();
+    if(/^today$/i.test(s)) return todayStr();
+    let m=s.match(/^([A-Za-z]{3,})\s+(\d{1,2}),?\s*(\d{4})?$/);
+    if(!m) return null;
+    const mo=MONTHS[m[1].toUpperCase().slice(0,3)];
+    if(mo===undefined) return null;
+    const yr=m[3]?+m[3]:new Date().getFullYear();
+    return `${yr}-${String(mo+1).padStart(2,'0')}-${String(+m[2]).padStart(2,'0')}`;
+  }
+
+  function friendlyDate(ds){
+    if(ds===todayStr()) return 'Today';
+    const tom=new Date(); tom.setDate(tom.getDate()+1);
+    const ts=`${tom.getFullYear()}-${String(tom.getMonth()+1).padStart(2,'0')}-${String(tom.getDate()).padStart(2,'0')}`;
+    if(ds===ts) return 'Tomorrow';
+    const d=new Date(ds+'T00:00:00');
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  }
+
+  function parseTime(s){
+    s=s.trim().toUpperCase();
+    let m=s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/);
+    if(m){let h=+m[1],mn=+m[2];if(m[3]==='PM'&&h!==12)h+=12;if(m[3]==='AM'&&h===12)h=0;return h*60+mn;}
+    m=s.match(/^(\d{1,2})\s*(AM|PM)$/);
+    if(m){let h=+m[1];if(m[2]==='PM'&&h!==12)h+=12;if(m[2]==='AM'&&h===12)h=0;return h*60;}
+    m=s.match(/^(\d{1,2}):(\d{2})$/);
+    if(m) return +m[1]*60 + +m[2];
+    return null;
+  }
+
+  function fmt(mins){
+    const h=Math.floor(mins/60),m=mins%60,p=h>=12?'PM':'AM';
+    const dh=h===0?12:h>12?h-12:h;
+    return `${dh}:${String(m).padStart(2,'0')} ${p}`;
+  }
+
+  // Parse scheduled: look for "at H:MM PM (IST)" lines
+  function parseScheduled(raw){
+    const lines=raw.split('\n').map(l=>l.trim());
+    const results=[];
+    for(let i=0;i<lines.length;i++){
+      const atM=lines[i].match(/^at\s+(\d{1,2}:\d{2})\s*(AM|PM)\s*(?:\(IST\))?$/i);
+      if(!atM) continue;
+      const startMin=parseTime(atM[1]+' '+atM[2]);
+      if(startMin===null) continue;
+      // scan back for date and name
+      let dateStr=todayStr(), name='';
+      for(let j=i-1;j>=Math.max(0,i-6);j--){
+        const d=parseDateLine(lines[j]);
+        if(d){dateStr=d; break;}
+      }
+      for(let j=i-1;j>=Math.max(0,i-7);j--){
+        if(/^\d+$/.test(lines[j])&&lines[j+1]){name=lines[j+1];break;}
+      }
+      results.push({name:name||'Interview',date:dateStr,start:startMin,end:startMin+durMin,label:`${name}||${dateStr}||${startMin}`});
+    }
+    return results;
+  }
+
+  // Parse available: look for "HH:MM - H:MM AM/PM (IST)" lines
+  function parseAvailable(raw){
+    const lines=raw.split('\n').map(l=>l.trim());
+    const results=[];
+    for(let i=0;i<lines.length;i++){
+      // "03:00 - 3:30 PM (IST)" or "10:00 - 10:30 AM (IST)"
+      const rm=lines[i].match(/^(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})\s*(AM|PM)\s*(?:\(IST\))?$/i);
+      if(!rm) continue;
+      const period=rm[3].toUpperCase();
+      let endMin=parseTime(rm[2]+' '+period);
+      let startMin=parseTime(rm[1]+' '+period);
+      // If start > end, start is likely crossing AM/PM boundary — try opposite period for start
+      if(startMin!==null&&endMin!==null&&startMin>endMin){
+        const alt=parseTime(rm[1]+' '+(period==='PM'?'AM':'PM'));
+        if(alt!==null&&alt<endMin) startMin=alt;
+      }
+      if(startMin===null||endMin===null) continue;
+
+      // scan back for date
+      let dateStr=todayStr(), name='';
+      for(let j=i-1;j>=Math.max(0,i-7);j--){
+        const d=parseDateLine(lines[j]);
+        if(d){dateStr=d;break;}
+      }
+      // scan back for name (line after a number)
+      for(let j=i-1;j>=Math.max(0,i-8);j--){
+        if(/^\d+$/.test(lines[j])&&lines[j+1]){name=lines[j+1];break;}
+      }
+      results.push({name:name||'Candidate',date:dateStr,start:startMin,end:endMin,label:`${name}||${dateStr}||${startMin}||${endMin}`});
+    }
+    return results;
+  }
+
+  function checkFit(slot){
+    const daySched=scheduled.filter(s=>s.date===slot.date);
+    for(const s of daySched){
+      if(slot.start<s.end&&slot.end>s.start)
+        return{ok:false,reason:`Overlaps with ${s.name} (${fmt(s.start)}–${fmt(s.end)})`};
+      const before=s.start-slot.end, after=slot.start-s.end;
+      if(before>=0&&before<gapMin) return{ok:false,reason:`Only ${before}min gap before ${s.name} at ${fmt(s.start)}`};
+      if(after>=0&&after<gapMin)   return{ok:false,reason:`Only ${after}min gap after ${s.name} ends ${fmt(s.end)}`};
+    }
+    return{ok:true};
+  }
+
+  function getDays(){
+    const s=new Set();
+    [...scheduled,...available].forEach(x=>s.add(x.date));
+    return [...s].sort();
+  }
+
+  function render(){
+    // refresh durations
+    scheduled=scheduled.map(s=>({...s,end:s.start+durMin}));
+
+    const fSched=activeDay==='ALL'?scheduled:scheduled.filter(s=>s.date===activeDay);
+    const fAvail=activeDay==='ALL'?available:available.filter(s=>s.date===activeDay);
+
+    const fits=[],confs=[];
+    fAvail.forEach(slot=>{
+      const r=checkFit(slot);
+      if(r.ok) fits.push(slot); else confs.push({slot,reason:r.reason});
+    });
+
+    const allFits=available.filter(s=>checkFit(s).ok);
+    document.getElementById('statSched').textContent=scheduled.length;
+    document.getElementById('statFits').textContent=allFits.length;
+    document.getElementById('statConf').textContent=available.length-allFits.length;
+    document.getElementById('statClaimed').textContent=claimed.length;
+
+    // Day tabs
+    const tabsEl=document.getElementById('dayTabs');
+    tabsEl.innerHTML='';
+    const mkTab=(label,day,count,fitCount)=>{
+      const t=document.createElement('button');
+      t.className=`day-tab${activeDay===day?' active':''}`;
+      t.innerHTML=`${label}<span class="badge${fitCount>0?' badge-g':''}">${fitCount}✓</span>`;
+      t.onclick=()=>{activeDay=day;render();};
+      tabsEl.appendChild(t);
+    };
+    mkTab('All Days','ALL',available.length,allFits.length);
+    getDays().forEach(day=>{
+      const da=available.filter(s=>s.date===day);
+      const df=da.filter(s=>checkFit(s).ok).length;
+      mkTab(friendlyDate(day),day,da.length,df);
+    });
+
+    // Schedule
+    document.getElementById('schedTitle').textContent=`Your Schedule (${fSched.length})`;
+    document.getElementById('schedList').innerHTML=fSched.length===0
+      ?'<div class="empty">No interviews on this day</div>'
+      :[...fSched].sort((a,b)=>a.start-b.start).map(s=>{
+        const isCl=claimed.find(c=>c.label===s.label);
+        return`<div class="slot s-sched fu">
+          <div class="s-bar${isCl?' g':''}"></div>
+          <div>
+            <div class="s-name">${s.name}</div>
+            <div class="s-time">${friendlyDate(s.date)} · ${fmt(s.start)}–${fmt(s.end)}</div>
+            ${isCl?'<div class="s-sub">✓ Claimed this session</div>':''}
+          </div>
+        </div>`;
+      }).join('');
+
+    // Claimed
+    if(claimed.length>0){
+      document.getElementById('claimedSection').classList.remove('hidden');
+      document.getElementById('claimedCount').textContent=claimed.length;
+      document.getElementById('claimedList').innerHTML=claimed.map(c=>
+        `<div class="claimed-item"><div class="claimed-name">✓ ${c.name}</div><div class="claimed-time">${friendlyDate(c.date)} · ${fmt(c.start)}–${fmt(c.end)}</div></div>`
+      ).join('');
+    }
+
+    // Fits
+    document.getElementById('fitsTitle').textContent=`✅ Can Claim (${fits.length})`;
+    document.getElementById('fitsList').innerHTML=fits.length===0
+      ?`<div class="empty">No slots fit with ${gapMin}min gap</div>`
+      :fits.map((s,i)=>`
+        <div class="slot s-fit fu" style="animation-delay:${i*30}ms">
+          <div>
+            <div class="s-fit-name">${s.name}</div>
+            <div class="s-fit-time">${friendlyDate(s.date)} · ${fmt(s.start)}–${fmt(s.end)}</div>
+            <div class="s-fit-note">${s.end-s.start}min slot · fits ✓</div>
+          </div>
+          <button class="btn-claim" data-lbl="${encodeURIComponent(s.label)}">+ Claim</button>
+        </div>`).join('');
+
+    // Conflicts
+    document.getElementById('confTitle').textContent=`❌ Conflicts (${confs.length})`;
+    document.getElementById('confList').innerHTML=confs.length===0
+      ?'<div class="empty">No conflicts 🎉</div>'
+      :confs.map(({slot,reason})=>`
+        <div class="slot s-conflict fu">
+          <div class="s-conf-name">${slot.name}</div>
+          <div class="s-conf-time">${friendlyDate(slot.date)} · ${fmt(slot.start)}–${fmt(slot.end)}</div>
+          <div class="s-conf-why">${reason}</div>
+        </div>`).join('');
+
+    // Wire claim
+    document.querySelectorAll('.btn-claim').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const lbl=decodeURIComponent(btn.dataset.lbl);
+        const slot=available.find(s=>s.label===lbl);
+        if(!slot) return;
+        scheduled=[...scheduled,{...slot,end:slot.start+durMin}].sort((a,b)=>a.start-b.start);
+        claimed=[...claimed,slot];
+        available=available.filter(s=>s.label!==lbl);
+        render();
+      });
+    });
+  }
+
+  const $ = id=>document.getElementById(id);
+  $('gapMinus').onclick=()=>{gapMin=Math.max(5,gapMin-5);$('gapVal').textContent=gapMin;if(!$('resultsView').classList.contains('hidden'))render();};
+  $('gapPlus').onclick =()=>{gapMin=Math.min(60,gapMin+5);$('gapVal').textContent=gapMin;if(!$('resultsView').classList.contains('hidden'))render();};
+  $('durMinus').onclick=()=>{durMin=Math.max(15,durMin-15);$('durVal').textContent=durMin;if(!$('resultsView').classList.contains('hidden'))render();};
+  $('durPlus').onclick =()=>{durMin=Math.min(120,durMin+15);$('durVal').textContent=durMin;if(!$('resultsView').classList.contains('hidden'))render();};
+
+  $('runBtn').onclick=()=>{
+    scheduled=parseScheduled($('scheduledInput').value);
+    available=parseAvailable($('availableInput').value);
+    claimed=[];activeDay='ALL';
+    $('inputView').classList.add('hidden');
+    $('resultsView').classList.remove('hidden');
+    render();
+  };
+  $('backBtn').onclick=()=>{
+    $('resultsView').classList.add('hidden');
+    $('inputView').classList.remove('hidden');
+  };
+})();
+</script>
+</body>
+</html>
